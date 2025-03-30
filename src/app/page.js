@@ -267,56 +267,58 @@ export default function Home() {
 
       {/* Fruit list sidebar */}
       <div 
-        className="w-64 bg-white text-black p-4 shadow-lg"
+        className="w-64 bg-white text-black p-4 shadow-lg flex flex-col h-screen"
         onMouseUp={handleMouseUp}
       >
         <h2 className="text-lg font-bold mb-4">Categories</h2>
-        <ul className="space-y-2">
-          {defaultFruits.map((fruit, index) => (
-            <li 
-              key={index}
-              className="p-2 bg-gray-800 rounded cursor-move hover:bg-black/80 transition-colors select-none text-white"
-              style={{
-                height: '60px',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-              onMouseDown={(e) => handleMouseDown(e, fruit, true)}
-            >
-              {fruit}
-            </li>
-          ))}
-          
-          {customFruits.length > 0 && (
-            <>
-              <li className="mt-4 mb-2 text-sm font-semibold text-gray-500">Custom Combinations</li>
-              {customFruits.map((fruit) => (
-                <li 
-                  key={fruit.id}
-                  className="p-2 bg-gray-800 rounded cursor-move hover:bg-gray-100 transition-colors select-none text-white relative"
-                  onMouseDown={(e) => {
-                    if (!e.target.closest('button')) {
-                      handleMouseDown(e, fruit.text, true);
-                    }
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{fruit.text}</span>
-                    <button
-                      className="ml-2 bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600"
-                      onClick={() => handleLearnClick({ text: fruit.text })}
-                    >
-                      Learn
-                    </button>
-                  </div>
-                  <span className="absolute top-0 right-0 transform translate-x-1 -translate-y-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    NEW
-                  </span>
-                </li>
-              ))}
-            </>
-          )}
-        </ul>
+        <div className="overflow-y-auto flex-1">
+          <ul className="space-y-2">
+            {defaultFruits.map((fruit, index) => (
+              <li 
+                key={index}
+                className="p-2 bg-gray-800 rounded cursor-move hover:bg-black/80 transition-colors select-none text-white"
+                style={{
+                  height: '60px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                onMouseDown={(e) => handleMouseDown(e, fruit, true)}
+              >
+                {fruit}
+              </li>
+            ))}
+            
+            {customFruits.length > 0 && (
+              <>
+                <li className="mt-4 mb-2 text-sm font-semibold text-gray-500">Custom Combinations</li>
+                {customFruits.map((fruit) => (
+                  <li 
+                    key={fruit.id}
+                    className="p-2 bg-gray-800 rounded cursor-move hover:bg-gray-100 transition-colors select-none text-white relative"
+                    onMouseDown={(e) => {
+                      if (!e.target.closest('button')) {
+                        handleMouseDown(e, fruit.text, true);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{fruit.text}</span>
+                      <button
+                        className="ml-2 bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600"
+                        onClick={() => handleLearnClick({ text: fruit.text })}
+                      >
+                        Learn
+                      </button>
+                    </div>
+                    <span className="absolute top-0 right-0 transform translate-x-1 -translate-y-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      NEW
+                    </span>
+                  </li>
+                ))}
+              </>
+            )}
+          </ul>
+        </div>
       </div>
 
       {/* Add the Modal */}
