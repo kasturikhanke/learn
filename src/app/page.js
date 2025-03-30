@@ -36,7 +36,7 @@ export default function Home() {
     });
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = async (e) => {
     if (isDragging && activeItem) {
       const newPosition = {
         x: e.clientX - dragOffset.x,
@@ -101,19 +101,20 @@ export default function Home() {
         }),
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
       const data = await response.json();
       console.log('Replicate API Response:', data);
       
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      
-      setAiResponse(data.response);
+      setAiResponse(data.response || 'No response from AI');
       return data.response;
     } catch (error) {
       console.error("Error getting AI response:", error);
-      setAiResponse("Failed to get AI response. Please try again.");
-      throw error;
+      const fallbackResponse = "Failed to get AI response. Please try again.";
+      setAiResponse(fallbackResponse);
+      return JSON.stringify({ name: `${item1Text} + ${item2Text}` }); // Fallback combination
     } finally {
       setIsLoading(false);
     }
@@ -124,17 +125,21 @@ export default function Home() {
     const newPosition = isDragging ? item1.position : item2.position;
     const newId = Date.now() + Math.random().toString(36).substr(2, 9);
     
-    // Call the AI API first to get the name
     let newName = combinedText; // default fallback
     try {
       const response = await getAIResponse(item1.text, item2.text);
-      // Parse the JSON string from the response
-      const parsedResponse = JSON.parse(response);
-      if (parsedResponse.name) {
-        newName = parsedResponse.name;
+      try {
+        const parsedResponse = JSON.parse(response);
+        if (parsedResponse.name) {
+          newName = parsedResponse.name;
+        }
+      } catch (parseError) {
+        console.error("Error parsing AI response:", parseError);
+        // Use the combined text as fallback if parsing fails
       }
     } catch (error) {
-      console.error("Error parsing AI response:", error);
+      console.error("Error getting AI response:", error);
+      // Use the combined text as fallback if API call fails
     }
     
     const newItem = {
@@ -158,14 +163,13 @@ export default function Home() {
 
   const handleMouseUp = async (e) => {
     if (isDragging && activeItem) {
-      if (isNewItem) {
-        // Only check sidebar location on mouse up
-        const sidebarElement = document.querySelector('.w-64');
-        const isInSidebar = sidebarElement.contains(e.target);
-        
-        if (!isInSidebar) {
+      const sidebarElement = document.querySelector('.w-64');
+      const isInSidebar = sidebarElement.contains(e.target);
+      
+      if (!isInSidebar) {
+        if (isNewItem) {
           const overlappingItem = draggableItems.find(item => 
-            checkOverlap(item, activeItem)
+            checkOverlap({ ...activeItem, position: { x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y } }, item)
           );
 
           if (overlappingItem) {
@@ -177,23 +181,27 @@ export default function Home() {
           } else {
             setDraggableItems(prev => [...prev, activeItem]);
           }
-        }
-      } else {
-        const overlappingItem = draggableItems.find(item => 
-          item.id !== activeItem.id && checkOverlap(item, activeItem)
-        );
+        } else {
+          const overlappingItem = draggableItems.find(item => 
+            item.id !== activeItem.id && checkOverlap(
+              { ...activeItem, position: { x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y } }, 
+              item
+            )
+          );
 
-        if (overlappingItem) {
-          const newItem = await combineItems(overlappingItem, activeItem);
-          setDraggableItems(prev => [
-            ...prev.filter(item => 
-              item.id !== overlappingItem.id && item.id !== activeItem.id
-            ),
-            newItem
-          ]);
+          if (overlappingItem) {
+            const newItem = await combineItems(overlappingItem, activeItem);
+            setDraggableItems(prev => [
+              ...prev.filter(item => 
+                item.id !== overlappingItem.id && item.id !== activeItem.id
+              ),
+              newItem
+            ]);
+          }
         }
       }
     }
+    
     setIsDragging(false);
     setActiveItem(null);
     setIsNewItem(false);
@@ -214,7 +222,7 @@ export default function Home() {
       <div 
         className="flex-1 bg-gray-100 relative"
         onMouseMove={handleMouseMove}
-        onMouseUp={(e) => handleMouseUp(e).catch(console.error)}
+        onMouseUp={handleMouseUp}
       >
         {/* Canvas items */}
         {draggableItems.map((item) => (
@@ -260,7 +268,7 @@ export default function Home() {
       {/* Fruit list sidebar */}
       <div 
         className="w-64 bg-white text-black p-4 shadow-lg"
-        onMouseUp={(e) => handleMouseUp(e).catch(console.error)}
+        onMouseUp={handleMouseUp}
       >
         <h2 className="text-lg font-bold mb-4">Categories</h2>
         <ul className="space-y-2">

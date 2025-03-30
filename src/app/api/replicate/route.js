@@ -51,7 +51,7 @@ export async function POST(request) {
       "name": "YourNewConcept"
     }`;
 
-    const systemPrompt = "You are a concept generator. Generate interesting academic or scientific concepts by combining different fields of study. Return only valid JSON with a single combined concept name.";
+    const systemPrompt = "ONLY RESPOND IN JSON. The output should only be structured as the Name. Do not include any other notes or explanations. You are a concept generator. Generate interesting academic or scientific concepts by combining different fields of study. Return only valid JSON with a single combined concept name.";
     
     const input = {
       prompt: prompt,
