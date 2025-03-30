@@ -156,21 +156,27 @@ export default function Home() {
     return newItem;
   };
 
-  const handleMouseUp = async () => {
+  const handleMouseUp = async (e) => {
     if (isDragging && activeItem) {
       if (isNewItem) {
-        const overlappingItem = draggableItems.find(item => 
-          checkOverlap(item, activeItem)
-        );
+        // Only check sidebar location on mouse up
+        const sidebarElement = document.querySelector('.w-64');
+        const isInSidebar = sidebarElement.contains(e.target);
+        
+        if (!isInSidebar) {
+          const overlappingItem = draggableItems.find(item => 
+            checkOverlap(item, activeItem)
+          );
 
-        if (overlappingItem) {
-          const newItem = await combineItems(overlappingItem, activeItem);
-          setDraggableItems(prev => [
-            ...prev.filter(item => item.id !== overlappingItem.id),
-            newItem
-          ]);
-        } else {
-          setDraggableItems(prev => [...prev, activeItem]);
+          if (overlappingItem) {
+            const newItem = await combineItems(overlappingItem, activeItem);
+            setDraggableItems(prev => [
+              ...prev.filter(item => item.id !== overlappingItem.id),
+              newItem
+            ]);
+          } else {
+            setDraggableItems(prev => [...prev, activeItem]);
+          }
         }
       } else {
         const overlappingItem = draggableItems.find(item => 
@@ -209,7 +215,6 @@ export default function Home() {
         className="flex-1 bg-gray-100 relative"
         onMouseMove={handleMouseMove}
         onMouseUp={(e) => handleMouseUp(e).catch(console.error)}
-        onMouseLeave={(e) => handleMouseUp(e).catch(console.error)}
       >
         {/* Canvas items */}
         {draggableItems.map((item) => (
@@ -219,11 +224,14 @@ export default function Home() {
             style={{
               left: item.position?.x ? `${item.position.x}px` : '0px',
               top: item.position?.y ? `${item.position.y}px` : '0px',
-              maxWidth: '300px'
+              height: '60px',
+              width: '200px',
+              display: 'flex',
+              alignItems: 'center'
             }}
             onMouseDown={(e) => handleMouseDown(e, item, false)}
           >
-            <div className="font-bold text-black mb-2">{item.text}</div>
+            <div className="font-bold text-black">{item.text}</div>
             {item.aiResponse && (
               <div className="text-sm text-black mt-2">
                 {item.aiResponse}
@@ -234,25 +242,37 @@ export default function Home() {
         {/* Preview of new item being dragged */}
         {isDragging && isNewItem && activeItem && (
           <div 
-            className="absolute cursor-move select-none bg-white p-4 rounded shadow-lg opacity-90 text-black font-bold"
+            className="absolute cursor-move select-none bg-white p-4 rounded shadow-lg opacity-90"
             style={{
               left: `${activeItem.position.x}px`,
               top: `${activeItem.position.y}px`,
+              height: '60px',
+              width: '200px',
+              display: 'flex',
+              alignItems: 'center'
             }}
           >
-            {activeItem.text}
+            <div className="font-bold text-black">{activeItem.text}</div>
           </div>
         )}
       </div>
 
       {/* Fruit list sidebar */}
-      <div className="w-64 bg-white p-4 shadow-lg">
+      <div 
+        className="w-64 bg-white text-black p-4 shadow-lg"
+        onMouseUp={(e) => handleMouseUp(e).catch(console.error)}
+      >
         <h2 className="text-lg font-bold mb-4">Categories</h2>
         <ul className="space-y-2">
           {defaultFruits.map((fruit, index) => (
             <li 
               key={index}
               className="p-2 bg-gray-800 rounded cursor-move hover:bg-black/80 transition-colors select-none text-white"
+              style={{
+                height: '60px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
               onMouseDown={(e) => handleMouseDown(e, fruit, true)}
             >
               {fruit}
@@ -266,16 +286,17 @@ export default function Home() {
                 <li 
                   key={fruit.id}
                   className="p-2 bg-gray-800 rounded cursor-move hover:bg-gray-100 transition-colors select-none text-white relative"
-                  onMouseDown={(e) => handleMouseDown(e, fruit.text, true)}
+                  onMouseDown={(e) => {
+                    if (!e.target.closest('button')) {
+                      handleMouseDown(e, fruit.text, true);
+                    }
+                  }}
                 >
                   <div className="flex items-center justify-between">
                     <span>{fruit.text}</span>
                     <button
                       className="ml-2 bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent dragging when clicking the button
-                        handleLearnClick({ text: fruit.text });
-                      }}
+                      onClick={() => handleLearnClick({ text: fruit.text })}
                     >
                       Learn
                     </button>
